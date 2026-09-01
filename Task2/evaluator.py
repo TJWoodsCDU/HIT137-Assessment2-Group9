@@ -47,7 +47,7 @@ def tokenize(expression):
                         i += 1
                 else:
                     raise ValueError(f"Invalid number format: {num}.")
-            token.append({"type": "NUM", "value": num})
+            tokens.append({"type": "NUM", "value": num})
             continue
 
         # Handle operators
@@ -119,20 +119,71 @@ def parse_and_eval(tokens):
     return ast
 
 
-def format_number():
-    pass
+def format_number(literal):
+    value = float(literal)
+    if value.is_integer():
+        return str(int(value))
+    return str(value)
 
 
 def format_tokens(tokens):
-    pass
+    parts = []
+    for tok in tokens:
+        if tok["type"] == "END":
+            continue
+        parts.append(f"{tok['type']}({tok['value']})")
+    return " ".join(parts)
 
 
 def format_tree(ast):
-    pass
+    node_type = ast[0]
+ 
+    if node_type == "num":
+        return format_number(ast[1])
+ 
+    if node_type == "neg":
+        return f"(-{format_tree(ast[1])})"
+ 
+    if node_type == "binop":
+        _, op, left, right = ast
+        return f"({format_tree(left)} {op} {format_tree(right)})"
+ 
+    raise ValueError(f"Unknown AST node: {ast}")
 
 
 def evaluate_ast(ast):
-    pass
+    node_type = ast[0]
+ 
+    if node_type == "num":
+        return float(ast[1])
+ 
+    if node_type == "neg":
+        return -evaluate_ast(ast[1])
+ 
+    if node_type == "binop":
+        _, op, left_ast, right_ast = ast
+        left = evaluate_ast(left_ast)
+        right = evaluate_ast(right_ast)
+ 
+        if op == '+':
+            return left + right
+        if op == '-':
+            return left - right
+        if op == '*':
+            return left * right
+        if op == '/':
+            if right == 0:
+                raise ZeroDivisionError("Division by zero")
+            return left / right
+        if op == '%':
+            if right == 0:
+                raise ZeroDivisionError("Modulo by zero")
+            return left % right
+        if op == '^':
+            return left ** right
+        raise ValueError(f"Unknown operator: {op}")
+ 
+    raise ValueError(f"Unknown AST node: {ast}")
 
 
 def process_expression(expression: str) -> dict:
