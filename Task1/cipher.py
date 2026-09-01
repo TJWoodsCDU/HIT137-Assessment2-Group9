@@ -44,7 +44,53 @@ def encrypt_file(shift1: int, shift2: int, input_path: str, output_path: str):
 
 
 def decrypt_file(shift1: int, shift2: int, input_path: str, output_path: str):
-    pass
+    try:
+        # Read the encrypted file
+        with open(input_path, 'r') as file:
+            text = file.read()
+        
+        result = ""
+        
+        for char in text:
+            if 'a' <= char <= 'z':
+                # Try to decrypt as if from first half (a-n)
+                pos = ord(char) - ord('a')
+                decrypted1 = (pos - (shift1 * shift2)) % 26 + ord('a')
+                decrypted2 = (pos + (shift1 + shift2)) % 26 + ord('a')
+                
+                # Choose the one that makes sense (in correct range)
+                if 'a' <= chr(decrypted1) <= 'n':
+                    result += chr(decrypted1)
+                else:
+                    result += chr(decrypted2)
+           
+            elif 'A' <= char <= 'Z':
+                pos = ord(char) - ord('A')
+                decrypted1 = (pos + shift1) % 26 + ord('A')
+                decrypted2 = (pos - (shift2 ** 2)) % 26 + ord('A')
+                
+                if 'A' <= chr(decrypted1) <='M':
+                    result += chr(decrypted1)
+                else:
+                    result += chr(decrypted2)
+            
+            elif '0' <= char <= '9':
+                new_pos = (ord(char) - ord('0') - (shift1 - shift2)) % 10
+                result += chr(ord('0') + new_pos)
+           
+            else:
+                result += char
+        
+        # Write the decrypted text
+        with open(output_path, 'w') as file:
+            file.write(result)
+       
+        print(f" Dncrypted '{input_path}' -> '{output_path}'")
+   
+    except FileNotFoundError:
+        print(f" Error: File '{input_path}' not found.")
+    except Exception as e:
+        print (f" Error during dncryption: {e}")
 
 
 def verify_files(original_path: str, decrypted_path: str):
