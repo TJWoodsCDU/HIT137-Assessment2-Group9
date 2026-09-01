@@ -94,20 +94,85 @@ def parse_and_eval(tokens):
         return tok
 
     def parse_expr():
-        pass
+        node = parse_term()
+        
+        while True:
+            tok = peek()
+            if tok and tol["type"] == "OP" and tok["value"] in '+-':
+                op = get()["value"]
+                right = parse_term()
+                node = (op, node, right)
+            else:
+                break
+       
+        return node
+
 
     def parse_term():
-        pass
+        node = parse_power()
+        
+        while True:
+            tok = peek()
+            if tok and tok["type"] == "OP" and tok["value"] in '*/%':
+                op = get()["value"]
+                right = parse_power()
+                node = (op, node, right)
+            else:
+                break
+                
+        return node
 
+    
     def parse_power():
-        pass
+        node = parse_factor()
+        
+        tok = peek()
+        if tok and tok["type"] == "OP" and tok["value"] == '^':
+            get() # consume '^'
+            right = parse_power() # Right-associative
+            node = ('^', node, right)
+            
+        return node
+    
 
     def parse_factor():
-        pass
+        tok = peek()
+        
+        # Unary negation
+        if tok and tok["type"] == "OP" and tok["value"] == '-':
+            get() # consume '-'
+            node = parse_factor()
+            return ('neg', node)
+            
+        # Unary plus (not supported - should raise error)
+        if tok and tok["type"] == "OP" and tok["value"] == '+':
+            raise ValueError("Unary plus is not supported")
+            
+        # Primary expression
+        return parse_primary()
 
     def parse_primary():
-        pass
-
+        tok = peek()
+        
+        # Number literal
+        if tok and tok["type"] == "NUM":
+            get() # consume number
+            return ('num', float(tok["value"]))
+            
+        # Parenthesized expression
+        if tok and tok["type"] == "LPAREN":
+            get() # consume '('
+            node = parse_expr()
+            
+            # Expect closing parenthesis
+            if not expect("RPAREN", ')'):
+                raise ValueError("Missing closing parenthesis")
+            
+            return node
+        
+        raise ValueError(f"Unexpected token: {tok}")
+            
+    
     # Begin chain
     ast = parse_expr()
 
