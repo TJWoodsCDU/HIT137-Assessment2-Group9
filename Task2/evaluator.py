@@ -19,7 +19,58 @@ def tokenize(expression):
     Convert the expression string into a list of dictionaries representing
     operators/characters
     """
-    pass
+    tokens = []
+    i = 0
+
+    while i < len(expression):
+        char = expression[i]
+
+        # Skip whitespace
+        if char.isspace():
+            i += 1
+            continue
+
+        # Handle numbers (including decimals)
+        if char.isdigit():
+            num = ""
+            # Integer part
+            while i < len(expression) and expression[i].isdigit():
+                num += expression[i]
+                i += 1
+            # Decimal part
+            if i < len(expression) and expression[i] == '.':
+                num += '.'
+                i += 1
+                if i < len(expression) and expression[i].isdigit():
+                    while i < len(expression) and expression[i].isdigit():
+                        num += expression[i]
+                        i += 1
+                else:
+                    raise ValueError(f"Invalid number format: {num}.")
+            token.append({"type": "NUM", "value": num})
+            continue
+
+        # Handle operators
+        if char in '+-*/%^':
+            tokens.append({"type": "OP", "value": char})
+            i += 1
+            continue
+
+        # Handle parenthese
+        if char == '(':
+            tokens.append({"type": "LPAREN", "value": '('})
+            i += 1
+            continue
+        if char == ')':
+            tokens.append({"type": "RPAREN", "value": ')'})
+            i += 1
+            continue
+
+        # Invalid character
+        raise ValueError(f"Invalid character: '{char}'")
+
+    tokens.append({"type": "END", "value": None})
+    return tokens
 
 
 def parse_and_eval(tokens):
