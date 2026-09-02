@@ -210,11 +210,11 @@ def format_tree(ast):
         return format_number(ast[1])
 
     if node_type == "neg":
-        return f"(-{format_tree(ast[1])})"
+        return f"(neg {format_tree(ast[1])})"
 
     if node_type == "op":
         _, op, left, right = ast
-        return f"({format_tree(left)} {op} {format_tree(right)})"
+        return f"({op} {format_tree(left)} {format_tree(right)})"
 
     raise ValueError(f"Unknown AST node: {ast}")
 
@@ -328,7 +328,7 @@ if __name__ == "__main__":
             else:
                 result_str = str(result_val)
 
-            block = f"Input: {result['input']}\nTree: {result['tree']}\nTokens: {result['tokens']}\nresult: {result_str}"
+            block = f"Input: {result['input']}\nTree: {result['tree']}\nTokens: {result['tokens']}\nResult: {result_str}"
             blocks.append(block)
 
         out.write("\n\n".join(blocks))
