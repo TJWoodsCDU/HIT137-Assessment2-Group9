@@ -4,43 +4,43 @@ def encrypt_file(shift1: int, shift2: int, input_path: str, output_path: str):
         # Read the input file
         with open(input_path, 'r') as file:
             text = file.read()
-            
+
         result = ""
-        
+
         for char in text:
-            if 'a' <= char <= 'n': # Lowercase a-n: shift forward by shift1 * shift2
+            if 'a' <= char <= 'n':  # Lowercase a-n: shift forward by shift1 * shift2
                 new_pos = (ord(char) - ord('a') + (shift1 * shift2)) % 26
                 result += chr(ord('a') + new_pos)
-            
-            elif 'o' <= char <= 'z': # Lowercase o-z: shift backward by shift1 + shift2
+
+            elif 'o' <= char <= 'z':  # Lowercase o-z: shift backward by shift1 + shift2
                 new_pos = (ord(char) - ord('a') - (shift1 + shift2)) % 26
                 result += chr(ord('a') + new_pos)
-           
-            elif 'A' <= char <= 'M': # Uppercase N-M: Shift backward by shift1
+
+            elif 'A' <= char <= 'M':  # Uppercase N-M: Shift backward by shift1
                 new_pos = (ord(char) - ord('A') - shift1) % 26
                 result += chr(ord('A') + new_pos)
-            
-            elif 'N' <= char <= 'Z': # Uppercase N-Z: shift forward by shift2^2
+
+            elif 'N' <= char <= 'Z':  # Uppercase N-Z: shift forward by shift2^2
                 new_pos = (ord(char) - ord('A') + (shift2 ** 2)) %26
                 result += chr(ord('A') + new_pos)
-            
-            elif '0' <= char <= '9': #Digits: shift forward by shift1 - shift2
+
+            elif '0' <= char <= '9':  # Digits: shift forward by shift1 - shift2
                 new_pos = (ord(char) - ord('0') + (shift1 - shift2)) % 10
                 result += chr(ord('0') + new_pos)
-            
-            else: # Everything else stays the same
+
+            else:  # Everything else stays the same
                 result += char
-        
+
         # Write the encrypted text
         with open(output_path, 'w') as file:
             file.write(result)
-        
+
         print(f" Encrypted '{input_path}' -> '{output_path}'")
-   
+
     except FileNotFoundError:
         print(f" Error: File '{input_path}' not found.")
     except Exception as e:
-        print (f" Error during encryption: {e}")
+        print(f" Error during encryption: {e}")
 
 
 def decrypt_file(shift1: int, shift2: int, input_path: str, output_path: str):
@@ -48,53 +48,61 @@ def decrypt_file(shift1: int, shift2: int, input_path: str, output_path: str):
         # Read the encrypted file
         with open(input_path, 'r') as file:
             text = file.read()
-        
+
         result = ""
-        
+
         for char in text:
             if 'a' <= char <= 'z':
                 # Try to decrypt as if from first half (a-n)
                 pos = ord(char) - ord('a')
                 decrypted1 = (pos - (shift1 * shift2)) % 26 + ord('a')
                 decrypted2 = (pos + (shift1 + shift2)) % 26 + ord('a')
-                
+
                 # Choose the one that makes sense (in correct range)
                 if 'a' <= chr(decrypted1) <= 'n':
                     result += chr(decrypted1)
                 else:
                     result += chr(decrypted2)
-           
+
             elif 'A' <= char <= 'Z':
                 pos = ord(char) - ord('A')
                 decrypted1 = (pos + shift1) % 26 + ord('A')
                 decrypted2 = (pos - (shift2 ** 2)) % 26 + ord('A')
-                
-                if 'A' <= chr(decrypted1) <='M':
+
+                if 'A' <= chr(decrypted1) <= 'M':
                     result += chr(decrypted1)
                 else:
                     result += chr(decrypted2)
-            
+
             elif '0' <= char <= '9':
                 new_pos = (ord(char) - ord('0') - (shift1 - shift2)) % 10
                 result += chr(ord('0') + new_pos)
-           
+
             else:
                 result += char
-        
+
         # Write the decrypted text
         with open(output_path, 'w') as file:
             file.write(result)
-       
-        print(f" Dncrypted '{input_path}' -> '{output_path}'")
-   
+
+        print(f"Decrypted '{input_path}' -> '{output_path}'")
+
     except FileNotFoundError:
-        print(f" Error: File '{input_path}' not found.")
+        print(f"Error: File '{input_path}' not found.")
     except Exception as e:
-        print (f" Error during dncryption: {e}")
+        print(f"Error during decryption: {e}")
 
 
 def verify_files(original_path: str, decrypted_path: str):
-    pass
+    with open(original_path, "r") as o_file:
+        orig_text = o_file.read()
+    with open(decrypted_path, "r") as d_file:
+        decr_text = d_file.read()
+
+    if orig_text == decr_text:
+        print("Success! The decryption is accurate to the original text.")
+    else:
+        print("Failure! The original text differs from the decrypted text.")
 
 
 def main():
@@ -129,8 +137,6 @@ def main():
     encrypt_file(shift1, shift2, "raw_text.txt", "encrypted_text.txt")
     decrypt_file(shift1, shift2, "encrypted_text.txt", "decrypted_text.txt")
     verify_files("raw_text.txt", "decrypted_text.txt")
-
-
 
 
 if __name__ == "__main__":
