@@ -98,7 +98,7 @@ def parse_and_eval(tokens):
         
         while True:
             tok = peek()
-            if tok and tol["type"] == "OP" and tok["value"] in '+-':
+            if tok and tok["type"] == "OP" and tok["value"] in '+-':
                 op = get()["value"]
                 right = parse_term()
                 node = (op, node, right)
