@@ -12,6 +12,8 @@ KEY:
     primary -> Numbers, Parentheses
 """
 
+import pathlib
+
 
 def tokenize(expression):
     """
@@ -95,7 +97,7 @@ def parse_and_eval(tokens):
 
     def parse_expr():
         node = parse_term()
-        
+
         while True:
             tok = peek()
             if tok and tok["type"] == "OP" and tok["value"] in '+-':
@@ -104,13 +106,12 @@ def parse_and_eval(tokens):
                 node = (op, node, right)
             else:
                 break
-       
-        return node
 
+        return node
 
     def parse_term():
         node = parse_power()
-        
+
         while True:
             tok = peek()
             if tok and tok["type"] == "OP" and tok["value"] in '*/%':
@@ -119,60 +120,61 @@ def parse_and_eval(tokens):
                 node = (op, node, right)
             else:
                 break
-                
+
         return node
 
-    
     def parse_power():
         node = parse_factor()
-        
+
         tok = peek()
         if tok and tok["type"] == "OP" and tok["value"] == '^':
-            get() # consume '^'
-            right = parse_power() # Right-associative
+            get()  # consume '^'
+            right = parse_power()  # Right-associative
             node = ('^', node, right)
-            
+
         return node
-    
 
     def parse_factor():
         tok = peek()
-        
+
         # Unary negation
         if tok and tok["type"] == "OP" and tok["value"] == '-':
-            get() # consume '-'
+            get()  # consume '-'
             node = parse_factor()
             return ('neg', node)
-            
+
         # Unary plus (not supported - should raise error)
         if tok and tok["type"] == "OP" and tok["value"] == '+':
             raise ValueError("Unary plus is not supported")
-            
+
         # Primary expression
         return parse_primary()
 
     def parse_primary():
         tok = peek()
-        
+
         # Number literal
         if tok and tok["type"] == "NUM":
-            get() # consume number
+            get()  # consume number
             return ('num', float(tok["value"]))
-            
+
         # Parenthesized expression
         if tok and tok["type"] == "LPAREN":
-            get() # consume '('
+            get()  # consume '('
             node = parse_expr()
-            
+
             # Expect closing parenthesis
-            if not expect("RPAREN", ')'):
+            next_tok = get()
+            if not next_tok or next_tok["type"] != "RPAREN":
                 raise ValueError("Missing closing parenthesis")
-            
+
             return node
-        
+
+        if not tok:
+            raise ValueError("Unexpected end of expression")
+
         raise ValueError(f"Unexpected token: {tok}")
-            
-    
+
     # Begin chain
     ast = parse_expr()
 
@@ -196,40 +198,40 @@ def format_tokens(tokens):
     for tok in tokens:
         if tok["type"] == "END":
             continue
-        parts.append(f"{tok['type']}({tok['value']})")
+        parts.append(f"[{tok['type']}:{tok['value']}]")
     return " ".join(parts)
 
 
 def format_tree(ast):
     node_type = ast[0]
- 
-    if node_type == "num":
+
+    if node_type == "NUM":
         return format_number(ast[1])
- 
-    if node_type == "neg":
+
+    if node_type == "NEG":
         return f"(-{format_tree(ast[1])})"
- 
-    if node_type == "binop":
+
+    if node_type == "OP":
         _, op, left, right = ast
         return f"({format_tree(left)} {op} {format_tree(right)})"
- 
+
     raise ValueError(f"Unknown AST node: {ast}")
 
 
 def evaluate_ast(ast):
     node_type = ast[0]
- 
-    if node_type == "num":
+
+    if node_type == "NUM":
         return float(ast[1])
- 
-    if node_type == "neg":
+
+    if node_type == "NEG":
         return -evaluate_ast(ast[1])
- 
-    if node_type == "binop":
+
+    if node_type == "OP":
         _, op, left_ast, right_ast = ast
         left = evaluate_ast(left_ast)
         right = evaluate_ast(right_ast)
- 
+
         if op == '+':
             return left + right
         if op == '-':
@@ -247,7 +249,7 @@ def evaluate_ast(ast):
         if op == '^':
             return left ** right
         raise ValueError(f"Unknown operator: {op}")
- 
+
     raise ValueError(f"Unknown AST node: {ast}")
 
 
@@ -279,8 +281,9 @@ def process_expression(expression: str) -> dict:
             int(calc_result) if calc_result.is_integer() else calc_result
         )
 
-    except Exception:
+    except Exception as e:
         # Do nothing. Resort to default error state
+        print(f"Error Occured. {e}")
         pass
 
     return result_dict
@@ -300,8 +303,16 @@ def evaluate_file(input_path: str) -> list[dict]:
 
 if __name__ == "__main__":
     # Define files
-    input_path = "input.txt"
-    output_path = "output.txt"  # TODO: Assert that output path is in the same directory as input path using pathlib
+    input_path = pathlib.Path("input.txt")
+
+    # Assert input path exists
+    if not input_path.exists():
+        raise FileNotFoundError(f"Cannot find file {input_path}")
+    if not input_path.is_file():
+        raise ValueError("Input path must be a file.")
+
+    # Assert output file is in the same directory as input file
+    output_path = input_path.parent / "output.txt"
 
     # Begin parsing
     results = evaluate_file("input.txt")
@@ -310,13 +321,13 @@ if __name__ == "__main__":
     with open(output_path, "w") as out:
         blocks = []
         for result in results:
-            result_val = result["resultult"]
+            result_val = result["result"]
             if isinstance(result_val, float):
                 result_str = format_number(result_val)
             else:
                 result_str = str(result_val)
 
-            block = f"Input: {result['input']}\nTree: {result['tree']}\nTokens: {result['tokens']}\nresultult: {result_str}"
+            block = f"Input: {result['input']}\nTree: {result['tree']}\nTokens: {result['tokens']}\nresult: {result_str}"
             blocks.append(block)
 
         out.write("\n\n".join(blocks))
