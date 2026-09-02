@@ -103,7 +103,7 @@ def parse_and_eval(tokens):
             if tok and tok["type"] == "OP" and tok["value"] in '+-':
                 op = get()["value"]
                 right = parse_term()
-                node = (op, node, right)
+                node = ('op', op, node, right)
             else:
                 break
 
@@ -117,7 +117,7 @@ def parse_and_eval(tokens):
             if tok and tok["type"] == "OP" and tok["value"] in '*/%':
                 op = get()["value"]
                 right = parse_power()
-                node = (op, node, right)
+                node = ('op', op, node, right)
             else:
                 break
 
@@ -130,7 +130,7 @@ def parse_and_eval(tokens):
         if tok and tok["type"] == "OP" and tok["value"] == '^':
             get()  # consume '^'
             right = parse_power()  # Right-associative
-            node = ('^', node, right)
+            node = ('op', '^', node, right)
 
         return node
 
@@ -164,7 +164,7 @@ def parse_and_eval(tokens):
             node = parse_expr()
 
             # Expect closing parenthesis
-            next_tok = get()
+            next_tok = get()  # consume ')'
             if not next_tok or next_tok["type"] != "RPAREN":
                 raise ValueError("Missing closing parenthesis")
 
@@ -179,7 +179,7 @@ def parse_and_eval(tokens):
     ast = parse_expr()
 
     # Confirm all tokens parsed
-    if pos < len(tokens):
+    if pos < (len(tokens) - 1):  # skip END token
         raise ValueError(f"Unparsed tokens remain starting at {tokens[pos]}")
 
     # Return Abstract Syntax Tree (AST)
@@ -197,6 +197,7 @@ def format_tokens(tokens):
     parts = []
     for tok in tokens:
         if tok["type"] == "END":
+            parts.append("[END]")
             continue
         parts.append(f"[{tok['type']}:{tok['value']}]")
     return " ".join(parts)
@@ -205,13 +206,13 @@ def format_tokens(tokens):
 def format_tree(ast):
     node_type = ast[0]
 
-    if node_type == "NUM":
+    if node_type == "num":
         return format_number(ast[1])
 
-    if node_type == "NEG":
+    if node_type == "neg":
         return f"(-{format_tree(ast[1])})"
 
-    if node_type == "OP":
+    if node_type == "op":
         _, op, left, right = ast
         return f"({format_tree(left)} {op} {format_tree(right)})"
 
@@ -221,13 +222,13 @@ def format_tree(ast):
 def evaluate_ast(ast):
     node_type = ast[0]
 
-    if node_type == "NUM":
+    if node_type == "num":
         return float(ast[1])
 
-    if node_type == "NEG":
+    if node_type == "neg":
         return -evaluate_ast(ast[1])
 
-    if node_type == "OP":
+    if node_type == "op":
         _, op, left_ast, right_ast = ast
         left = evaluate_ast(left_ast)
         right = evaluate_ast(right_ast)
